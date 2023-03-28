@@ -2,7 +2,6 @@
   "name": "plotbahn",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "dependencies": {
     "@observablehq/plot": "^0.6.1",
     "@testing-library/jest-dom": "^5.16.5",
@@ -11,11 +10,13 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
+    "swr": "^2.1.1",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
     "csv-parse": "^5.3.6",
     "enquirer": "^2.3.6",
+    "fuzzy-search": "^3.2.1",
     "jsdom": "^21.1.1"
   },
   "scripts": {

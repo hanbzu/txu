@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 import { argv } from "node:process";
-import { getDeps, getTrain } from "./api.js";
+import { getDeps, getTrain } from "./api.mjs";
 import crypto from "crypto";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import runSequentially from "../jslib/runSequentially.js";
 import uniqBy from "../jslib/uniqBy.js";
 import wait from "../jslib/wait.js";
+import Enquirer from "enquirer";
+import stations from "../data/stationsWithDbId.json" assert { type: "json" };
+import FuzzySearch from "fuzzy-search";
+
+const stationSearcher = new FuzzySearch(stations, ["name"], { sort: true });
 
 const CACHE_PATH = "./private/cache.json";
 let cachedData;
@@ -33,11 +38,40 @@ const cached =
 
 const [, , cmd, ...args] = argv;
 Promise.resolve()
-  .then(() => {
+  .then(async () => {
     switch (cmd) {
       // deps "7100064" "23.03.31"
-      case "deps":
-        return runSequentially(
+      case "deps": {
+        //console.log(stationSearcher.search("Barce").slice(0, 4));
+        //return;
+        if (isNaN(args[0])) {
+          // Ze zaila https://github.com/enquirer/enquirer/blob/master/examples/autocomplete/option-suggest-streaming.js
+          const prompt = new Enquirer.AutoComplete({
+            message: "Nondik?",
+            //limit: 10,
+            suggest(typed, choices) {
+              this.toChoices(
+                stationSearcher
+                  .search(typed)
+                  .slice(0, 9)
+                  .map((d) => d.name)
+              )
+                .then((choices) => Promise.all(choices))
+                .then(async (toAdd) => {
+                  toAdd.forEach((d) => {
+                    this.choices.push(d);
+                  });
+                  await this.render();
+                });
+            },
+            choices: [],
+          });
+
+          const answer = await prompt.run();
+          console.log("Answer:", answer);
+        }
+        return;
+        const deps = await runSequentially(
           [...Array(24)].map(
             (d, i) => () => cached(getDeps)(...[...args, `${i}:00`])
           )
@@ -45,16 +79,18 @@ Promise.resolve()
           .then(
             (results) => results.reduce((acc, d) => [...acc, ...(d || [])], []) // Concatenate results
           )
-          .then((results) => uniqBy(results, (d) => d.train.url)) // Dedup based on train url
-          .then((res) => {
-            res.forEach(({ time, train, destination }) =>
-              console.log(time, train.name, cleanUpStation(destination.name))
-            );
-          });
+          .then((results) => uniqBy(results, (d) => d.train.url)); // Dedup based on train url
+
+        deps.forEach(({ time, train, destination }) =>
+          console.log(time, train.name, cleanUpStation(destination.name))
+        );
+        return;
+      }
       // train "https://reiseauskunft.bahn.de/bin/traininfo.exe/dn/781761/790366/61386/229894/80"
       // train "https://reiseauskunft.bahn.de/bin/traininfo.exe/dn/892848/833236/124128/235552/80"
-      case "train":
+      case "train": {
         return cached(getTrain)(...args).then(console.log);
+      }
       default:
         console.info("You need to provide a command");
     }

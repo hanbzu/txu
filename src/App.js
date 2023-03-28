@@ -1,5 +1,6 @@
 import React from "react";
 import * as Plot from "@observablehq/plot";
+import { useTrain } from "./backend";
 
 function usePlot(opts) {
   const ref = React.useRef();
@@ -17,12 +18,18 @@ export default function App() {
   const Chart = usePlot({
     marks: [Plot.barY(alphabet, { x: "letter", y: "frequency" })],
   });
+
+  const { data } = useTrain(
+    "https://reiseauskunft.bahn.de/bin/traininfo.exe/dn/892848/833236/124128/235552/80"
+  );
+
   return (
     <div>
       HI
       <div>
         <Chart />
       </div>
+      <pre>{JSON.stringify(data, null, 2)}</pre>
     </div>
   );
 }
