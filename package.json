@@ -1,7 +1,8 @@
 {
-  "name": "plotbahn",
+  "name": "txu",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://hanbzu.github.io/txu/",
   "dependencies": {
     "@observablehq/plot": "^0.6.1",
     "@testing-library/jest-dom": "^5.16.5",
@@ -20,6 +21,8 @@
     "jsdom": "^21.1.1"
   },
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
